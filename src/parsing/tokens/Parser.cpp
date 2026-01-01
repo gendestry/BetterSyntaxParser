@@ -1,8 +1,10 @@
 #include "Parser.h"
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "utils/font.h"
+#include "utils/stringutils.h"
 #include "utils/utils.h"
 
 using Utils::Font;
@@ -177,28 +179,39 @@ namespace Parsing::Tokens
         return m_tokens;
     }
 
-    void Parser::printDefinedTokens() const
+    std::optional<std::reference_wrapper<Token>> Parser::operator[](std::size_t index)
     {
-        std::cout << Font::bold << Font::fgreen << " ==== INPUT TOKENS ==== " << Font::reset << std::endl;
+        if(index < m_tokens.size())
+        {
+            return m_tokens[index];
+        }
+
+        return std::optional<std::reference_wrapper<Token>>();
+    }
+
+    const std::string Parser::toString() const
+    {
+        Utils::Stream stream;
+        stream.add(Font::fgreen, " ==== TOKENIZER ==== \n", Font::reset);
+        stream.add(Font::fgreen, " 1. Input tokens \n", Font::reset);
+
         for (auto &token : m_definedTokens)
         {
-            std::cout << Font::fyellow << "'" << token.tokenName << "'" << Font::reset << ": "
-                      << Font::fcyan << token.regex.getPattern() << Font::reset;
+            stream.add(
+                Font::fyellow, "'", token.tokenName, "'", Font::reset, ": ", 
+                Font::fcyan, token.regex.getPattern(), Font::reset
+            );
 
             if (token.ignore)
             {
-                std::cout << Font::fred << " [IGNORED]" << Font::reset;
+                stream.add(Font::fred, " [IGNORED]", Font::reset);
             }
 
-            std::cout << std::endl;
+            stream << '\n';
         }
-    }
-
-    void Parser::printTokens() const
-    {
-        std::cout << "\n"
-                  << Font::fgreen << " ==== PARSED TOKENS ==== \n"
-                  << Font::reset;
+        
+        stream << '\n';
+        stream.add(Font::fgreen, "2. Parsed tokens ---- \n", Font::reset);
 
         unsigned int oldLine = 0;
         for (const auto &token : m_tokens)
@@ -206,14 +219,20 @@ namespace Parsing::Tokens
             unsigned int linesBetween = m_lineCounter.numLinesInBetween(token.start, token.end);
             if (!token.ignore)
             {
-                std::cout << token.name << "[" << token.start << "," << token.end << "] ";
+                stream.add(token.name, "[", token.start, ",", token.end, "] ");
             }
             for (unsigned int i = 0; i < linesBetween; i++)
             {
-                std::cout << std::endl;
+                stream << '\n';
             }
         }
 
-        std::cout << std::endl;
+        return stream.end();
+    }
+
+
+    void Parser::print() const
+    {
+        std::cout << toString() << std::endl;
     }
 };
