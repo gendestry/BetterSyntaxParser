@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
+#include "Ast.h"
 
 #include "parsing/tokens/Parser.h"
 
@@ -12,8 +13,10 @@ namespace Parsing::Syntax
     {
         std::vector<Rule> m_rules;
         std::unordered_map<std::string, std::size_t> m_rulesMap;
+        std::unordered_map<std::string, Ast*> m_asts;
 
         bool parseSyntaxRule(const std::string &rule, uint32_t position);
+        
         
     public:
         Parser() {}
@@ -34,6 +37,7 @@ namespace Parsing::Syntax
         }
         [[nodiscard]] const std::vector<Rule>& rules() const { return m_rules; }
 
+        void printAsts() const;
         void printRules() const;
     };
 }

@@ -4,7 +4,7 @@
 #include "traits/Stringify.h"
 #include "utils/stringutils.h"
 
-namespace Matching
+namespace Parsing::Syntax
 {
     struct Ast : public Traits::Stringify
     {
@@ -17,20 +17,20 @@ namespace Matching
             : name(name)
         {}
 
-        Ast(Ast&& other)
-        {
-            name = "expr";
-            index = other.index;
-            nodes = other.nodes;
-        };
+        // Ast(Ast&& other)
+        // {
+        //     name = "expr";
+        //     index = other.index;
+        //     nodes = other.nodes;
+        // };
 
         [[nodiscard]] const std::string toString() const override
         {
             Utils::Stream stream;
-            stream.add(name, "\nchildren:\n");
+            stream.add(name, "\n  children:\n");
             for(auto* node : nodes)
             {
-                stream << node->toString() << '\n';
+                stream << "  " << node->toString() << '\n';
             }
 
             return stream.end();

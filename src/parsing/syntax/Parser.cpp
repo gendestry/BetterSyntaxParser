@@ -94,6 +94,7 @@ namespace Parsing::Syntax
         {
             m_rules.push_back(ruleObj);
             m_rulesMap[ruleObj.name()] = m_rules.size() - 1;
+            // m_asts[ruleObj.name()] = new Ast(ruleObj.name());
         }
         else
         {
@@ -111,6 +112,7 @@ namespace Parsing::Syntax
             // current = origi
             for(auto& p : r.patterns())
             {
+                // Ast* temp = new Ast(); 
                 for(auto& t : p.tokens())
                 {
                     if(parser.isTokenDefined(t.token))
@@ -129,6 +131,14 @@ namespace Parsing::Syntax
         return true;
     }
 
+    void Parser::printAsts() const
+    {
+        for(auto&[key, value] : m_asts)
+        {
+            std::println("{}", value->toString());
+            // for()
+        }
+    }
 
     void Parser::printRules() const
     {
@@ -141,5 +151,6 @@ namespace Parsing::Syntax
         {
             rule.print();
         }
+        
     }
 }

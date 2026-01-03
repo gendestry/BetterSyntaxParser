@@ -168,10 +168,8 @@ namespace Matching
             return;
         }
 
-        std::println("Here");
 
-        // m_tokenParser.print();
-        std::println("Here");
+        m_tokenParser.print();
         
         // for(auto& token : m_tokenParser.getTokens())
         // {
@@ -195,108 +193,64 @@ namespace Matching
 
         // m_rules = m_syntaxParser.rules();
         m_syntaxParser.printRules();
+        // m_syntaxParser.printAsts();
+    }
+
+    bool Matcher::isEOF() const
+    {
+        return m_currentToken >= m_tokenParser.getTokens().size();
     }
 
 
     bool Matcher::match()
     {
         std::println("{}[MAIN]    Matching rule1 {}", Utils::Font::forange, Utils::Font::reset);
-     
-        const auto& inputTokens = m_tokenParser.getTokens();
-        const auto& rules = m_syntaxParser.rules();
-        auto isEOF = [this, &inputTokens]()
-        {
-            return this->m_currentToken == inputTokens.size();
-        };
-
-
-        std::size_t prevToken = m_currentToken;
 
         uint8_t counter = 0;
-        std::println("{}[MAIN]    Matching rule1 {}", Utils::Font::forange, Utils::Font::reset);
-
         while(!isEOF())
         {
-                std::println("{}[MAIN]    Matching rule2 {}", Utils::Font::forange, Utils::Font::reset);
-
-            for(auto& rule : rules)
+            if(!matchNext())
             {
-                auto& patterns = rule.patterns();
-
-                std::println("{}[MAIN]    Matching rule {}{}", Utils::Font::forange, rule.name(), Utils::Font::reset);
-                for(auto& p : patterns)
-                {
-                    std::println("{}[MAIN]    -- Matching pattern {}{}", Utils::Font::forange, p.toString(), Utils::Font::reset);
-                    if(matchPattern(p))
-                    {
-                        std::println("{}[MAIN]    ---- Matched pattern {}{}", Utils::Font::fgreen, p.toString(), Utils::Font::reset);
-                        if(isEOF())
-                        {
-                            if(m_savedToken)
-                            {
-                                std::println("{}", m_savedToken->toString());
-                            }
-                            return true;
-                        }
-                        else
-                        {
-                            std::println("{}[MAIN]    ---- Pushed custom ast {}{}", Utils::Font::fgreen, rule.name(), Utils::Font::reset);
-                            // ast->name = "expr";
-                            if(m_savedToken)
-                            {
-                                Ast* ast = new Ast("expr");
-                                ast->nodes.push_back(m_savedToken);
-                                
-                                for(auto& ast : m_currentAstNodes)
-                                {
-                                    ast->nodes.push_back(ast);
-                                }
-                                m_currentAstNodes.clear();
-                                m_savedToken = ast;
-                                std::println("-{}", m_savedToken->toString());
-
-                            //     // if(m_tempAst.size() != 0)
-                            //     // {
-                            //     //     ast->index = m_tempAst.back()->index + m_currentToken - prevToken;
-                            //     // }
-                            //     // else
-                            //     // {
-                            //     //     ast->index = m_savedToken->index + m_currentToken - prevToken;
-                            //     // }
-
-                            //     // m_tempAst.push_back(ast);
-                            }
-                            else
-                            {
-                                Ast* first = new Ast(inputTokens[m_currentToken - 1].name);
-                                first->index = m_currentToken;
-                                m_savedToken = first;
-                                std::println("+{}", m_savedToken->toString());
-
-                            }
-    
-                            std::println("{}", m_savedToken->toString());
-    
-                            m_currentToken = prevToken;
-                        }
-                    }
-                    else
-                    {
-                        std::println("{}[MAIN]    ---- Pattern not matched {}{}", Utils::Font::fred, p.toString(), Utils::Font::reset);
-                        m_currentToken = prevToken;
-                    }
-                }
+                std::println("ISSUE");
+                return false;
             }
-
-        if(counter ++ > 10)
-        {return false;}
+            if(counter ++ > 10)
+            {return false;}
 
         }
-    
 
-        if(m_savedToken)
+        return true;
+    }
+
+    bool Matcher::matchNext()
+    {
+        const auto& inputTokens = m_tokenParser.getTokens();
+        const auto& rules = m_syntaxParser.rules();
+        std::size_t prevToken = m_currentToken;
+        
+        std::println("{}[MAIN]    Matching rule2 {}", Utils::Font::forange, Utils::Font::reset);
+
+        for(auto& rule : rules)
         {
-            std::println("{}", m_savedToken->toString());
+            auto& patterns = rule.patterns();
+
+            std::println("{}[MAIN]    Matching rule {}{}", Utils::Font::forange, rule.name(), Utils::Font::reset);
+            for(auto& p : patterns)
+            {
+                std::println("{}[MAIN]    -- Matching pattern {}{}", Utils::Font::forange, p.toString(), Utils::Font::reset);
+                if(matchPattern(p))
+                {
+                    std::println("{}[MAIN]    ---- Matched pattern {}{}", Utils::Font::fgreen, p.toString(), Utils::Font::reset);
+                    // std::println("{}[MAIN]    ---- Pushed custom ast {}{}", Utils::Font::fgreen, rule.name(), Utils::Font::reset);
+                    m_currentToken = prevToken;
+                    return true;
+                }
+                else
+                {
+                    std::println("{}[MAIN]    ---- Pattern not matched {}{}", Utils::Font::fred, p.toString(), Utils::Font::reset);
+                    m_currentToken = prevToken;
+                }
+            }
         }
 
         return false;
@@ -335,6 +289,39 @@ namespace Matching
             auto selectedToken = m_tokenParser[m_currentToken];
             std::println("{}{}[PATTERN] -- Match token '{}' {}", Utils::Font::byColorCode(90,90,90), Utils::Font::italic, token.token, Utils::Font::reset);
             
+            // if(!m_savedToken)
+            {
+                // Ast* ast = new Ast("expr");
+                // ast->nodes.push_back(m_savedToken);
+                
+                // for(auto& a : m_currentAstNodes)
+                // {
+                //     ast->nodes.push_back(a);
+                // }
+                // m_currentAstNodes.clear();
+                // m_savedToken = ast;
+                // std::println("-{}", m_savedToken->toString());
+
+            // //     // if(m_tempAst.size() != 0)
+            // //     // {
+            // //     //     ast->index = m_tempAst.back()->index + m_currentToken - prevToken;
+            // //     // }
+            // //     // else
+            // //     // {
+            // //     //     ast->index = m_savedToken->index + m_currentToken - prevToken;
+            // //     // }
+
+            // //     // m_tempAst.push_back(ast);
+            // }
+            // else
+            // {
+                // Ast* first = new Ast(m_tokenParser.getTokens()[m_currentToken - 1].name);
+                // first->index = m_currentToken;
+                // m_savedToken = first;
+                // std::println("+{}", m_savedToken->toString());
+                // return;
+
+            }
             // if(m_savedToken)
             {
             //     if(offset == 0)

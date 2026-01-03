@@ -54,7 +54,14 @@ namespace Parsing::Syntax
 
         for (auto &pattern : patterns)
         {
+            // Ast* ast = new Ast(m_name);
             m_patterns.push_back(Utils::removeEnclosingWhitespaces(pattern));
+            // for(auto& t : m_patterns.back().tokens())
+            // {
+            //     ast->nodes.push_back(new Ast(t.token));
+            // }
+
+            // asts.push_back(ast);
         }
 
         return true;
@@ -70,19 +77,17 @@ namespace Parsing::Syntax
             ss << " -> " << m_return;
         }
 
-        if (m_patterns.size() == 1)
-        {
-            ss<< std::format(" ( {}{}{}{}{} ){}", Font::reset, Font::fcyan, m_patterns[0].toString(), Font::reset, Font::fyellow, Font::reset);
-            return ss.str();
-        }
-
-        ss << std::format(" (\n{}{}", Font::reset, Font::fcyan);
+        ss << std::format(" (\n{}", Font::reset);
         for (auto &pattern : m_patterns)
         {
-            ss << pattern.toString() << "\n";
+            ss << Utils::String::concat("  ", Font::fcyan, pattern.toString(), Font::reset, "\n");
         }
 
         ss << std::format("{}){}", Font::fyellow, Font::reset);
+        // for(auto* ast : asts)
+        // {
+        //     std::println("{}", ast->toString());
+        // }
         return ss.str();
     }
 

@@ -3,11 +3,13 @@
 #include <string>
 #include "traits/Stringify.h"
 #include "Pattern.h"
+#include "Ast.h"
 
 namespace Parsing::Syntax
 {
     class Rule : public Traits::Stringify
     {
+        std::vector<Ast*> asts;
         std::string m_name;
         std::string m_return;
         std::vector<Pattern> m_patterns;
