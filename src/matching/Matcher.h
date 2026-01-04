@@ -1,7 +1,7 @@
 #pragma once
 #include "parsing/tokens/Parser.h"
 #include "parsing/syntax/Parser.h"
-// #include "Ast.h"
+#include "parsing/syntax/Ast.h"
 #include <functional>
 #include <list>
 
@@ -13,6 +13,8 @@ namespace Matching
         std::string m_inputFile;
         Parsing::Tokens::Parser m_tokenParser;
         Parsing::Syntax::Parser m_syntaxParser;
+
+        std::vector<Parsing::Syntax::Ast*> m_parsedAst;
 
         // std::unordered_map<std::string, Ast*> m_astNodes;
 

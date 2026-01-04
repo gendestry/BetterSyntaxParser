@@ -2,6 +2,7 @@
 
 #include "utils/utils.h"
 #include "utils/font.h"
+#include "utils/stringutils.h"
 #include <print>
 #include <format>
 #include <sstream>

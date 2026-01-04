@@ -89,12 +89,13 @@ namespace Parsing::Syntax
         std::string right = Utils::removeEnclosingWhitespaces(nameAndRule[1]);
 
         Rule ruleObj(left, right);
+        const std::string& name = ruleObj.name();
 
-        if (m_rulesMap.find(ruleObj.name()) == m_rulesMap.end())
+        if (m_rulesMap.find(name) == m_rulesMap.end())
         {
             m_rules.push_back(ruleObj);
-            m_rulesMap[ruleObj.name()] = m_rules.size() - 1;
-            // m_asts[ruleObj.name()] = new Ast(ruleObj.name());
+            m_rulesMap[name] = m_rules.size() - 1;
+            m_tree[name] = new Ast(name);
         }
         else
         {
@@ -107,6 +108,7 @@ namespace Parsing::Syntax
 
     bool Parser::validateInput(Tokens::Parser& parser)
     {
+        // for(auto& t : parser.)
         for(auto& r : m_rules)
         {
             // current = origi
@@ -117,6 +119,12 @@ namespace Parsing::Syntax
                 {
                     if(parser.isTokenDefined(t.token))
                     {
+                        if(!m_tree.contains(t.token))
+                        {
+                            Ast* a = new Ast(t.token);
+                            a->terminated = true;
+                            m_tree[t.token] = a;
+                        }
                         continue;
                     }
                     else if(m_rulesMap.contains(t.token))
@@ -128,16 +136,67 @@ namespace Parsing::Syntax
                 }   
             }
         }   
+
+        buildTree();
         return true;
+    }
+
+    void Parser::buildTree()
+    {
+
+        for(auto& r : m_rules)
+        {
+            for(auto& p : r.patterns())
+            {
+                if(p.tokens().size() == 1)
+                {
+                    auto& t = p.tokens()[0];
+                    // if(m_definedTokensTree.contains(t.token))
+                    // {
+                        // m_tree[r.name()]->nodes.push_back(m_definedTokensTree[t.token]);
+                    // }
+                    if(m_tree.contains(t.token))
+                    {
+                        m_tree[r.name()]->nodes.push_back(m_tree[t.token]);
+                        m_tree[t.token]->references.push_back(m_tree[r.name()]);
+                        // temp->nodes.push_back(m_tree[t.token]);
+                    }
+                    continue;
+                }
+
+                Ast* temp = new Ast("temp");
+                // Ast* temp = new Ast(); 
+                for(auto& t : p.tokens())
+                {
+                    // if(m_definedTokensTree.contains(t.token))
+                    // {
+                        // temp->nodes.push_back(m_definedTokensTree[t.token]);
+                    // }
+                    if(m_tree.contains(t.token))
+                    {
+                        temp->nodes.push_back(m_tree[t.token]);
+                        // m_tree[r.name()]->references.push_back(temp);
+                    }
+                }
+                temp->references.push_back(m_tree[r.name()]);
+                m_tree[r.name()]->nodes.push_back(temp);
+            }
+        }
+
+        m_mainTree = m_tree[m_rules[0].name()];
+
+        // std::println("{}", m_tree["artihExpr"]->nodes[0]->nodes[0]->nodes.size());
     }
 
     void Parser::printAsts() const
     {
-        for(auto&[key, value] : m_asts)
-        {
-            std::println("{}", value->toString());
-            // for()
-        }
+        std::println("{}", m_mainTree->toString());
+        // return;
+        // for(auto[key, value] : m_tree)
+        // {
+        //     std::println("{}", value->toString());
+        //     // for()
+        // }
     }
 
     void Parser::printRules() const

@@ -77,6 +77,8 @@ namespace Parsing::Tokens
     bool Parser::parseTokens(const std::string& file_path)
     {
         std::string input;
+        bool debug = false;
+        Utils::Stream outStr;
         
         try
         {
@@ -105,20 +107,20 @@ namespace Parsing::Tokens
             if (pos >= input.size())
                 break;
 
-            PRINT(std::cout << " === POS[" << pos << "] === " << std::endl;)
+            outStr << " === POS[" << pos << "] === \n";
             intermediate = input.substr(pos);
 
             bool matched = false;
             for (auto &token : m_definedTokens)
             {
                 std::string printableIntermediate = Utils::sanitizeString(intermediate);
-                std::cout << " - Testing token: "
+                outStr << " - Testing token: "
                           << Font::fyellow << "'" << token.tokenName << "'" << Font::reset
                           << " on: " << Font::fcyan << "'" << printableIntermediate << "' " << Font::reset;
 
                 if (token.regex.match(intermediate))
                 {
-                    std::cout << Font::fgreen << "ok" << Font::reset << std::endl;
+                    outStr << Font::fgreen << "ok" << Font::reset << '\n';
 
                     unsigned int _maxMatch = token.regex.getMaxMatch();
                     unsigned int _numLinesBetween = m_lineCounter.numLinesInBetween(pos, pos + _maxMatch);
@@ -130,16 +132,16 @@ namespace Parsing::Tokens
 
                     if (_numLinesBetween == 0)
                     {
-                        std::cout << Font::fgreen << "Matched token[" << _line + 1 << "][";
+                        outStr << Font::fgreen << "Matched token[" << _line + 1 << "][";
                     }
                     else
                     {
-                        std::cout << Font::fgreen << "Matched token[" << _line + 1 << "-" << _line + _numLinesBetween << "][";
+                        outStr << Font::fgreen << "Matched token[" << _line + 1 << "-" << _line + _numLinesBetween << "][";
                     }
 
-                    std::cout << _start << ", " << _end << "]: "
+                    outStr << _start << ", " << _end << "]: "
                               << Font::fyellow << "'" << token.tokenName << "'" << Font::reset << ": "
-                              << Font::fcyan << "'" << Utils::sanitizeString(token.regex.getMatch()) << "'" << Font::reset << std::endl;
+                              << Font::fcyan << "'" << Utils::sanitizeString(token.regex.getMatch()) << "'" << Font::reset << '\n';
 
                     if(!token.ignore)
                     {
@@ -153,19 +155,23 @@ namespace Parsing::Tokens
                 }
                 else
                 {
-                    std::cout << Font::fred << "err" << Font::reset << std::endl;
+                    outStr << Font::fred << "err" << Font::reset << '\n';
                 }
             }
 
             if (!matched)
             {
-                std::cout << Font::bold << Font::fred << "NO MATCH FOUND FOR: '" << intermediate << "'" << Font::reset << std::endl;
+                outStr << Font::bold << Font::fred << "NO MATCH FOUND FOR: '" << intermediate << "'" << Font::reset << '\n';
                 return false;
             }
         }
 
-        std::cout << Font::bold << Font::fgreen << "SUCCESS" << Font::reset << std::endl;
+        outStr << Font::bold << Font::fgreen << "SUCCESS" << Font::reset << '\n';
 
+        if(debug)
+        {
+            std::cout <<outStr.end();
+        }
         return true;
     }
 

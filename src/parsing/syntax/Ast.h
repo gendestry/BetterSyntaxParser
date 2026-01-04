@@ -1,42 +1,30 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "traits/Stringify.h"
-#include "utils/stringutils.h"
 
 namespace Parsing::Syntax
 {
-    struct Ast : public Traits::Stringify
+    class Ast : public Traits::Stringify
     {
+        const std::string paddedString(uint16_t currentPadding = 0) const;
+        static std::vector<std::string> m_visited;
+
+        bool hasVisited(const std::string& name) const;
+        bool terminates() const;
+    public:
         std::string name;
         std::size_t index;
         std::vector<Ast*> nodes;
+        std::vector<Ast*> references;
 
+        bool terminated = false;
+        void clearVisisted() { m_visited.clear();}
         Ast() = default;
-        Ast(const std::string& name)
-            : name(name)
-        {}
+        Ast(const std::string& name);
 
-        // Ast(Ast&& other)
-        // {
-        //     name = "expr";
-        //     index = other.index;
-        //     nodes = other.nodes;
-        // };
-
-        [[nodiscard]] const std::string toString() const override
-        {
-            Utils::Stream stream;
-            stream.add(name, "\n  children:\n");
-            for(auto* node : nodes)
-            {
-                stream << "  " << node->toString() << '\n';
-            }
-
-            return stream.end();
-        }
-
-        
+        bool match(std::vector<Ast*>& tokens, std::size_t& currentIndex);
+        [[nodiscard]] const std::string toString() const override;
     };
-
 }
