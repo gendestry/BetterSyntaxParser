@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <optional>
 
+#include "Token.h"
 #include "regex/regex.h"
 #include "utils/lineCounter.h"
 
@@ -17,22 +18,6 @@ namespace Parsing::Tokens
         std::string tokenName;
         Regex::Regex regex;
         bool ignore = false;
-    };
-
-    struct Token// : public Traits::Stringify
-    {
-        unsigned int start, end;
-        std::string name;
-        bool ignore = false;
-
-        // Token(unsigned int start, unsigned int end, bool ignore)
-        //     : start(start), end(end), ignore(ignore)
-        // {}
-
-        // [[nodiscard]] const std::string toString() const override
-        // {
-        //     return "TOKENT";   
-        // }
     };
 
     class Parser : public Traits::Stringify

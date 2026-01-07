@@ -77,7 +77,7 @@ namespace Parsing::Tokens
     bool Parser::parseTokens(const std::string& file_path)
     {
         std::string input;
-        bool debug = false;
+        bool debug = true;
         Utils::Stream outStr;
         
         try
@@ -145,9 +145,9 @@ namespace Parsing::Tokens
 
                     if(!token.ignore)
                     {
-                        m_tokens.push_back({pos, pos + _maxMatch, token.tokenName, token.ignore});
+                        m_tokens.push_back({pos, pos + _maxMatch, token.tokenName, Utils::sanitizeString(token.regex.getMatch()), token.ignore});
                     }
-                    m_tokensFull.push_back({pos, pos + _maxMatch, token.tokenName, token.ignore});
+                    m_tokensFull.push_back({pos, pos + _maxMatch, token.tokenName, "" ,token.ignore});
 
                     pos += _maxMatch;
                     matched = true;
@@ -225,7 +225,7 @@ namespace Parsing::Tokens
             unsigned int linesBetween = m_lineCounter.numLinesInBetween(token.start, token.end);
             if (!token.ignore)
             {
-                stream.add(token.name, "[", token.start, ",", token.end, "] ");
+                stream.add(token.name, "[", token.start, ",", token.end, "]", token.value, "  ");
             }
             for (unsigned int i = 0; i < linesBetween; i++)
             {

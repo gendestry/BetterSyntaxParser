@@ -7,6 +7,7 @@ namespace Parsing::Syntax
 {
  
     std::vector<std::string> Ast::m_visited;
+    std::stack<Ast*> Ast::m_tokens;
 
     bool Ast::hasVisited(const std::string& name) const
     {
@@ -100,9 +101,53 @@ namespace Parsing::Syntax
         return stream.end();
     }
 
+    bool Ast::matchNode(Ast* node, std::vector<Ast*>& tokens, std::size_t& currentIndex)
+    {
+        if(node->name == tokens[currentIndex]->name)
+        {
+            // m_tokens[currentIndex] = this;
+            std::println("Found match: {}", node->name);
+            return true;
+            // maxMatch = currentIndex + 1;
+            // currentIndex++;
+            // m_parsedAst[m_currentToken] = m_syntaxParser.getNode(root->name);
+            // if(node->terminated)
+            // {
+                // return true;
+            // }
+            // return true;
+        }
+        else if(node->terminated)
+        {
+            // continue;
+            return false;
+        }
+        else
+        {
+            std::println("Penetrating: {}", node->name);
+            node->match(tokens, currentIndex);
+            // for(auto* n1 : node->nodes)
+            // {
+                
+            // }
+        }
+        return true;
+    }
+
     bool Ast::match(std::vector<Ast*>& tokens, std::size_t& currentIndex)
     {
+        static bool init = true;
+        if(init)
+        {
+            // m_tokens.resize(tokens.size());
+            for(uint16_t i = 0; i < tokens.size(); i++)
+            {
+                // m_tokens.push();
+            }
+            init = false;
+        }
         std::size_t maxMatch = 0;
+        std::size_t prevIndex = currentIndex;
         // m_visited.clear();
         for(auto* node : nodes)
         {
@@ -112,32 +157,11 @@ namespace Parsing::Syntax
                 std::print("{}  ", t->name);
             }
             std::println("");
-            if(node->name == tokens[currentIndex]->name)
+            if(matchNode(node, tokens, currentIndex))
             {
-                tokens[currentIndex] = this;
-                std::println("Found match: {}", node->name);
-                maxMatch = currentIndex + 1;
-                // currentIndex++;
-                // m_parsedAst[m_currentToken] = m_syntaxParser.getNode(root->name);
-                // if(node->terminated)
-                // {
-                    // return true;
-                // }
-                // return true;
+                maxMatch = currentIndex - prevIndex;
             }
-            else if(node->terminated)
-            {
-                continue;
-            }
-            else
-            {
-                std::println("Penetrating: {}", node->name);
-                node->match(tokens, currentIndex);
-                // for(auto* n1 : node->nodes)
-                // {
-                    
-                // }
-            }
+            currentIndex = prevIndex;
         }
         // for(auto)
     }

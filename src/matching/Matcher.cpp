@@ -168,6 +168,9 @@ namespace Matching
             return;
         }
 
+        m_tokenParser.print
+        ();
+
 
         if(!m_syntaxParser.parseSyntaxFile(syntaxFile))
         {
@@ -202,20 +205,21 @@ namespace Matching
             m_parsedAst.push_back(m_syntaxParser.getNode(token.name));
         }
 
+        matchNext();
         // Parsing::Syntax::Ast* root = m_syntaxParser.getAstRoot();
         // root->match(m_parsedAst, m_currentToken);
 
-        while(!isEOF())
-        {
-            if(!matchNext())
-            {
-                std::println("ISSUE");
-                return false;
-            }
-            if(counter ++ > 10)
-            {return false;}
+        // while(!isEOF())
+        // {
+        //     if(!matchNext())
+        //     {
+        //         std::println("ISSUE");
+        //         return false;
+        //     }
+        //     if(counter ++ > 10)
+        //     {return false;}
 
-        }
+        // }
 
         return true;
     }
@@ -271,7 +275,22 @@ namespace Matching
 
     bool Matcher::matchRule(const Parsing::Syntax::Rule& rule)
     {
-        return matchRule(rule.name());
+        std::string name = rule.name();
+        std::println("{}[RULE] Match rule '{}' {}{}", Utils::Font::fmagenta, name, m_currentToken, Utils::Font::reset);
+        std::size_t storedIndex = m_currentToken;
+        auto& patterns = m_syntaxParser[name].value().get().patterns();
+
+        for(auto& pattern : patterns)
+        {
+            if(matchPattern(pattern))
+            {
+                std::println("[RULE] -- Matched rule {}", name);
+                return true;
+            }
+        }
+
+        m_currentToken = storedIndex;
+        return false;
     }
 
     bool Matcher::matchPattern(const Parsing::Syntax::Pattern& pattern)
