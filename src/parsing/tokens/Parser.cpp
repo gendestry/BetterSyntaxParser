@@ -77,7 +77,7 @@ namespace Parsing::Tokens
     bool Parser::parseTokens(const std::string& file_path)
     {
         std::string input;
-        bool debug = true;
+        bool debug = false;
         Utils::Stream outStr;
         
         try
