@@ -172,7 +172,7 @@ namespace Matching
 
         for(auto& token : m_tokenParser.getTokens())
         {
-            m_tokens.push_back(new AstToken(token));
+            m_tokens.push_back(std::make_shared<AstToken>(token));
         }
 
         if(!m_syntaxParser.parseSyntaxFile(syntaxFile))
@@ -196,65 +196,51 @@ namespace Matching
         return m_currentToken >= m_tokenParser.getTokens().size() - 1;
     }
 
-
-
     bool Matcher::match()
     {
-        Ast* step;
-        // while(isEOF())
+        std::shared_ptr<Ast> step;
+        while(true)
         {
+            std::print("Current input tokens: ");
+            for(std::shared_ptr<Ast> t : m_tokens)
+            {
+                if(t->custom_token)
+                {
+                    std::print("{}{}{}  ", Utils::Font::italic, t->name, Utils::Font::reset);
+                }
+                else
+                {
+                    std::print("{}  ", t->name);
+                }
+            }
+    
+            std::println("");
 
             step = matchStep();
+            
+            m_tokens.erase(m_tokens.begin(), m_tokens.begin() + m_currentToken);
+            step->custom_token = true;
+            m_tokens.insert(m_tokens.begin(), step);
+
+            m_currentToken = 0;
+
+            if(m_tokens.size() == 1)
+            {
+                return true;
+            }
         }
 
-        m_tokens.erase(m_tokens.begin(), m_tokens.begin() + m_currentToken);
-        step->custom_token = true;
-        m_tokens.insert(m_tokens.begin(), step);
 
-        for(Ast* t : m_tokens)
-        {
-            std::print("{}  ", t->name);
-        }
 
-        std::println("");
-
-        m_currentToken = 0;
-        step = matchStep();
-
-        return step != nullptr;
+        return false;
     }
     
-    Ast* Matcher::matchStep()
+    std::shared_ptr<Ast> Matcher::matchStep()
     {
-        // Ast* max = new Ast(rules[0].name());
         std::println("{}Match Step{}", Utils::Font::fgreen, Utils::Font::reset);
-        std::cout << std::endl;
         const auto& rules = m_syntaxParser.rules();
-        Ast* max = matchRule2(rules[0].name());
+        std::shared_ptr<Ast> max = matchRule2(rules[0].name());
 
-        // uint32_t maxMatch = 0;
-        // uint32_t maxMatchTokenIndex = 0;
-        // std::size_t prevToken = m_currentToken;
-        // for(uint32_t i = 0; i < rules[0].patterns().size(); i++)
-        // {
-        //     auto& pattern = rules[0].patterns()[i];
-        //     std::vector<Ast*> temp = matchPattern(pattern);
-        //     if(temp.size() > 0)
-        //     {
-        //         auto diff = m_currentToken - prevToken;
-        //         if(diff > maxMatch)
-        //         {
-        //             max->nodes.clear();
-        //             max->nodes = temp;
-        //             maxMatchTokenIndex = m_currentToken;
-        //             maxMatch = diff;
-        //         }
-        //     }
-
-        //     m_currentToken = prevToken;
-        // }
-
-        // std::print("CurrentToken: {}\n{}", maxMatchTokenIndex, max->toString());
         if(max)
         {
             std::println("{}Match Step Successfull, index: {}{}", Utils::Font::fgreen, m_currentToken, Utils::Font::reset);
@@ -266,45 +252,36 @@ namespace Matching
         return max;
     }
 
-    std::vector<Ast*> Matcher::matchPattern(const Parsing::Syntax::Pattern& pattern)
+    std::vector<std::shared_ptr<Ast>> Matcher::matchPattern(const Parsing::Syntax::Pattern& pattern)
     {
         std::println("{}Matching pattern: {}{}", Utils::Font::fwhite, pattern.toString(), Utils::Font::reset);
-        std::cout << std::endl;
 
         auto& tokens = pattern.tokens();
         uint16_t index = 0;
-        std::vector<Ast*> ast;
+        std::vector<std::shared_ptr<Ast>> ast;
         for(; index < tokens.size(); index++)
         {
             // std::println("Index: {}, m_currentToken: {}", index, m_currentToken);
             auto patternToken = tokens[index];
             if(m_currentToken < m_tokens.size())
             {
-                Ast* inToken = m_tokens[m_currentToken];
+                std::shared_ptr<Ast> inToken = m_tokens[m_currentToken];
                 std::string inTokenName = inToken->name;
                 if(patternToken.token == inTokenName)
                 {
                     std::println("{}[T] In: {}, Pattern: {}{}", Utils::Font::fwhite, inTokenName, patternToken.token, Utils::Font::reset);
-        std::cout << std::endl;
 
                     m_currentToken++;
-                    if(inToken->custom_token)
-                    {
-                        ast.push_back(inToken);
-                        continue;
-                    }
-                    ast.push_back(new AstToken(static_cast<AstToken*>(inToken)->token));
+                    ast.push_back(inToken);
                 }
                 else if(m_syntaxParser.isValidRule(patternToken.token))
                 {
                     std::println("{}[R] Index: {}, m_currentToken: {}{}", Utils::Font::fwhite, index, m_currentToken, Utils::Font::reset);
-        std::cout << std::endl;
 
-                    Ast* temp = matchRule(patternToken.token); 
+                    std::shared_ptr<Ast> temp = matchRule(patternToken.token); 
                     if(!temp)
                     {
                         std::println("{}Pattern not matched: {} {}", Utils::Font::fred, pattern.toString(), Utils::Font::reset);
-        std::cout << std::endl;
 
                         ast.clear();
                         return ast;
@@ -317,15 +294,11 @@ namespace Matching
                     break;
                 }
             }
-
         }
 
         if(index == tokens.size())
         {
-            // std::println("Matched: {}", pattern.toString());
             std::println("{}Pattern matched: {} {}", Utils::Font::fgreen, pattern.toString(), Utils::Font::reset);
-            std::cout << std::endl;
-
             return ast;
         }
 
@@ -333,19 +306,20 @@ namespace Matching
         return ast;
     };
 
-    Ast* Matcher::matchRule(const std::string& ruleName)
+    std::shared_ptr<Ast> Matcher::matchRule(const std::string& ruleName)
     {
-        Ast* ast = new Ast(ruleName);
-        // std::string oldRule = m_currentRule;
-        // m_currentRule = ruleName;
+        std::shared_ptr<Ast> ast = std::make_shared<Ast>(ruleName);
         std::println("{}Matching rule: {}{}", Utils::Font::fcyan, ruleName, Utils::Font::reset);
-        std::cout << std::endl;
 
         for(auto& pattern : m_syntaxParser[ruleName].value().get().patterns())
         {
-            std::vector<Ast*> temp = matchPattern(pattern);
+            std::vector<std::shared_ptr<Ast>> temp = matchPattern(pattern);
             if(temp.size() > 0)
             {
+                for(std::shared_ptr<Ast> t : temp)
+                {
+                    t->parent = ast;
+                }
                 ast->tokenIndex = m_currentToken;
                 ast->nodes = std::move(temp);
                 return ast;
@@ -353,23 +327,22 @@ namespace Matching
         }
 
         // m_currentRule = oldRule;
-        delete ast;
         return nullptr;
     };
 
-    Ast* Matcher::matchRule2(const std::string& name)
+    std::shared_ptr<Ast> Matcher::matchRule2(const std::string& name)
     {
         std::println("{}Matching rule2: {}{}", Utils::Font::fmagenta, name, Utils::Font::reset);
         const auto& rule = m_syntaxParser[name].value().get();
-        Ast* max = new Ast(rule.name());
-        std::cout << std::endl;
+
+        std::shared_ptr<Ast> max = std::make_shared<Ast>(rule.name());
         uint32_t maxMatch = 0;
         uint32_t maxMatchTokenIndex = 0;
         std::size_t prevToken = m_currentToken;
         for(uint32_t i = 0; i < rule.patterns().size(); i++)
         {
             auto& pattern = rule.patterns()[i];
-            std::vector<Ast*> temp = matchPattern(pattern);
+            std::vector<std::shared_ptr<Ast>> temp = matchPattern(pattern);
             if(temp.size() > 0)
             {
                 auto diff = m_currentToken - prevToken;
@@ -388,19 +361,22 @@ namespace Matching
 
         if(maxMatch == 0)
         {
+            return nullptr;
             // std::println("{}")
-            delete max;
         }
         else
         {
             max->tokenIndex = maxMatchTokenIndex;
             max->numTokens = maxMatchTokenIndex - prevToken;
             m_currentToken = maxMatchTokenIndex;
-            std::print("{}Matched Rule2, currentToken: {}\n{}{}", Utils::Font::fmagenta, maxMatchTokenIndex, Utils::Font::reset, max->toString());
-        std::cout << std::endl;
 
+            std::print("{}Matched Rule2, currentToken: {}\n{}{}", Utils::Font::fmagenta, maxMatchTokenIndex, Utils::Font::reset, max->toString());
         }
 
+        for(std::shared_ptr<Ast> a : max->nodes)
+        {
+            a->parent = max;
+        }
         return max;
     }
 

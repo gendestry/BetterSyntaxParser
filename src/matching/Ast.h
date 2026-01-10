@@ -4,6 +4,7 @@
 #include "utils/stringutils.h"
 #include <vector>
 #include <cstdint>
+#include <memory>
 
 namespace Matching
 {
@@ -11,7 +12,8 @@ namespace Matching
     struct Ast : public Traits::Stringify
     {
         std::string name;
-        std::vector<Ast*> nodes;
+        std::shared_ptr<Ast> parent;
+        std::vector<std::shared_ptr<Ast>> nodes;
         uint32_t tokenIndex = 0;
         uint32_t numTokens = 0;
         bool custom_token = false;
@@ -24,13 +26,13 @@ namespace Matching
 
 
 
-        ~Ast()
-        {
-            for(Ast* node : nodes)
-            {
-                delete node;
-            }
-        }
+        // ~Ast()
+        // {
+        //     for(Ast* node : nodes)
+        //     {
+        //         delete node;
+        //     }
+        // }
 
         virtual const std::string paddedToString(uint8_t padding) const
         {
@@ -47,9 +49,15 @@ namespace Matching
             }
             stream << pad << name << ": \n";
             std::string newline = (nodes.size() > 1) ? "\n" : "";
-            for(Ast* node : nodes)
+            for(uint32_t i = 0; i < nodes.size(); i++)
             {
-                stream << node->paddedToString(padding + 1) << newline;
+                std::shared_ptr<Ast> node = nodes[i];
+                stream << node->paddedToString(padding + 1);
+
+                if(i < nodes.size() - 1)
+                {
+                    stream << newline;
+                }
             }
 
             return stream.end();
@@ -57,7 +65,7 @@ namespace Matching
 
         const std::string toString() const override
         {
-            return paddedToString(0);
+            return paddedToString(0) + "\n";
         }
     };
 
