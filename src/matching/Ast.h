@@ -14,13 +14,15 @@ namespace Matching
         std::vector<Ast*> nodes;
         uint32_t tokenIndex = 0;
         uint32_t numTokens = 0;
-        bool terminating = false;
+        bool custom_token = false;
 
         Ast(){}
 
         Ast(std::string name)
             : name(name)
         {}
+
+
 
         ~Ast()
         {
@@ -65,7 +67,6 @@ namespace Matching
             : token(token)
         {
             name = token.name;
-            terminating = true;
         }
         Parsing::Tokens::Token token;
 
