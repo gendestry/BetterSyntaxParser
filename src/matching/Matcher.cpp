@@ -154,17 +154,17 @@
 namespace Matching
 {
     Matcher::Matcher(const std::string& tokenFile, const std::string& syntaxFile, const std::string& inputFile)
-        : m_inputFile(inputFile)
+        : m_inputFile(inputFile), logger("MATCHER")
     {
         if(!m_tokenParser.parseDefinedTokens(tokenFile))
         {
-            std::println("[TOKEN] Error");
+            logger.println("[TOKEN] Error");
             return;
         }
         
         if(!m_tokenParser.parseTokens(inputFile))
         {
-            std::println("[TOKEN] Input tokens error");
+            logger.println("[TOKEN] Input tokens error");
             return;
         }
 
@@ -177,18 +177,19 @@ namespace Matching
 
         if(!m_syntaxParser.parseSyntaxFile(syntaxFile))
         {
-            std::println("[SYNTAX] Error");
+            logger.println("[SYNTAX] Error");
             return;
         }
 
         if(!m_syntaxParser.validateInput(m_tokenParser))
         {
-            std::println("[SYNTAX] Validate input error");
+            logger.println("[SYNTAX] Validate input error");
             return;
         }
 
+        logger.setLevel(Utils::Logger::DEBUGGING);
         m_syntaxParser.printRules();
-        m_syntaxParser.printAsts();
+        // m_syntaxParser.printAsts();
     }
 
     bool Matcher::isEOF() const
@@ -201,20 +202,22 @@ namespace Matching
         std::shared_ptr<Ast> step;
         while(true)
         {
-            std::print("Current input tokens: ");
+            logger.print("Current input tokens: ");
+            logger.toggleScope();
             for(std::shared_ptr<Ast> t : m_tokens)
             {
                 if(t->custom_token)
                 {
-                    std::print("{}{}{}  ", Utils::Font::italic, t->name, Utils::Font::reset);
+                    logger.printColor(Utils::Font::italic, "{}  ", t->name);
                 }
                 else
                 {
-                    std::print("{}  ", t->name);
+                    logger.print("{}  ", t->name);
                 }
-            }
-    
-            std::println("");
+            }    
+            logger.println("");
+            logger.toggleScope();
+
 
             step = matchStep();
             
@@ -230,38 +233,34 @@ namespace Matching
             }
         }
 
-
-
         return false;
     }
     
     std::shared_ptr<Ast> Matcher::matchStep()
     {
-        std::println("{}Match Step{}", Utils::Font::fgreen, Utils::Font::reset);
         const auto& rules = m_syntaxParser.rules();
         std::shared_ptr<Ast> max = matchRule2(rules[0].name());
 
         if(max)
         {
-            std::println("{}Match Step Successfull, index: {}{}", Utils::Font::fgreen, m_currentToken, Utils::Font::reset);
+            logger.printlnColor(Utils::Font::fgreen, "Match Step Successfull, index: {}", m_currentToken);
         }
         else
         {
-            std::println("{}Match Step Error, index: {}{}", Utils::Font::fred, m_currentToken, Utils::Font::reset);
+            logger.printlnColor(Utils::Font::fred, "Match Step Error, index: {}", m_currentToken);
         }
         return max;
     }
 
     std::vector<std::shared_ptr<Ast>> Matcher::matchPattern(const Parsing::Syntax::Pattern& pattern)
     {
-        std::println("{}Matching pattern: {}{}", Utils::Font::fwhite, pattern.toString(), Utils::Font::reset);
+        logger.debug("Matching pattern: {} at index: {}", pattern.toString(), m_currentToken);
 
         auto& tokens = pattern.tokens();
         uint16_t index = 0;
         std::vector<std::shared_ptr<Ast>> ast;
         for(; index < tokens.size(); index++)
         {
-            // std::println("Index: {}, m_currentToken: {}", index, m_currentToken);
             auto patternToken = tokens[index];
             if(m_currentToken < m_tokens.size())
             {
@@ -269,20 +268,18 @@ namespace Matching
                 std::string inTokenName = inToken->name;
                 if(patternToken.token == inTokenName)
                 {
-                    std::println("{}[T] In: {}, Pattern: {}{}", Utils::Font::fwhite, inTokenName, patternToken.token, Utils::Font::reset);
-
+                    logger.debug("[T] Pattern: {}, currentToken: {}", patternToken.token, m_currentToken);
                     m_currentToken++;
                     ast.push_back(inToken);
                 }
                 else if(m_syntaxParser.isValidRule(patternToken.token))
                 {
-                    std::println("{}[R] Index: {}, m_currentToken: {}{}", Utils::Font::fwhite, index, m_currentToken, Utils::Font::reset);
+                    logger.debug("[R] Rule: {}, m_currentToken: {}", patternToken.token, m_currentToken);
 
                     std::shared_ptr<Ast> temp = matchRule(patternToken.token); 
                     if(!temp)
                     {
-                        std::println("{}Pattern not matched: {} {}", Utils::Font::fred, pattern.toString(), Utils::Font::reset);
-
+                        logger.error("Pattern not matched: {}", pattern.toString());
                         ast.clear();
                         return ast;
                     }
@@ -298,7 +295,7 @@ namespace Matching
 
         if(index == tokens.size())
         {
-            std::println("{}Pattern matched: {} {}", Utils::Font::fgreen, pattern.toString(), Utils::Font::reset);
+            logger.printlnColor(Utils::Font::fgreen, "Pattern matched: {}", pattern.toString());
             return ast;
         }
 
@@ -309,7 +306,7 @@ namespace Matching
     std::shared_ptr<Ast> Matcher::matchRule(const std::string& ruleName)
     {
         std::shared_ptr<Ast> ast = std::make_shared<Ast>(ruleName);
-        std::println("{}Matching rule: {}{}", Utils::Font::fcyan, ruleName, Utils::Font::reset);
+        logger.printlnColor(Utils::Font::fcyan, "Matching rule: {}", ruleName);
 
         for(auto& pattern : m_syntaxParser[ruleName].value().get().patterns())
         {
@@ -332,7 +329,7 @@ namespace Matching
 
     std::shared_ptr<Ast> Matcher::matchRule2(const std::string& name)
     {
-        std::println("{}Matching rule2: {}{}", Utils::Font::fmagenta, name, Utils::Font::reset);
+        logger.printlnColor(Utils::Font::fmagenta, "Matching rule2: {}", name);
         const auto& rule = m_syntaxParser[name].value().get();
 
         std::shared_ptr<Ast> max = std::make_shared<Ast>(rule.name());
@@ -362,7 +359,6 @@ namespace Matching
         if(maxMatch == 0)
         {
             return nullptr;
-            // std::println("{}")
         }
         else
         {
@@ -370,7 +366,10 @@ namespace Matching
             max->numTokens = maxMatchTokenIndex - prevToken;
             m_currentToken = maxMatchTokenIndex;
 
-            std::print("{}Matched Rule2, currentToken: {}\n{}{}", Utils::Font::fmagenta, maxMatchTokenIndex, Utils::Font::reset, max->toString());
+            logger.printlnColor(Utils::Font::fmagenta, "Matched Rule2, currentToken: {}", maxMatchTokenIndex);
+            logger.toggleScope();
+            logger.print(max->toString());
+            logger.toggleScope();
         }
 
         for(std::shared_ptr<Ast> a : max->nodes)

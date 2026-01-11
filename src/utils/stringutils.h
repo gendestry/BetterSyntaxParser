@@ -53,6 +53,24 @@ namespace Utils
             ss.clear();
             return temp;
         }
+
+        template<typename... Args>
+        void addFormatted(std::string format, Args&&... args)
+        {
+            auto msg = std::vformat(format, std::make_format_args(args...));
+            ss << msg;
+        }
+
+        static std::string pad(uint32_t n, std::string by)
+        {
+            Stream s;
+            for(uint32_t i = 0; i < n; i++)
+            {
+                s << by;
+            }
+
+            return s.end();
+        }
     };
 
     // class Logger

@@ -1,6 +1,5 @@
 #include "Parser.h"
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 #include "utils/font.h"
@@ -11,24 +10,16 @@ using Utils::Font;
 
 namespace Parsing::Tokens
 {
-    Parser::Parser(const std::string &file_path) : m_filePath(file_path)
+    Parser::Parser()
+        : logger("TOKENIZER")
+    {}
+
+    Parser::Parser(const std::string &file_path) 
+        : logger("TOKENIZER"), m_filePath(file_path)
     {
         // try{}
         parseDefinedTokens(file_path);
     }
-
-    // FileParser::FileParser(const FileParser &other)
-    //     : m_FilePath(other.m_FilePath),
-    //       m_FileContent(other.m_FileContent)
-    // {
-    // }
-
-    // Parser::Parser(Parser &&other) noexcept
-    //     // : m_FilePath(std::move(other.m_FilePath)),
-    //     //   m_FileContent(std::move(other.m_FileContent))
-    // {
-    //     m_filePath = std::move(other.m_filePath);
-    // }
 
     bool Parser::parseDefinedTokens(const std::string& file_path)
     {
@@ -77,7 +68,6 @@ namespace Parsing::Tokens
     bool Parser::parseTokens(const std::string& file_path)
     {
         std::string input;
-        bool debug = false;
         Utils::Stream outStr;
         
         try
@@ -86,19 +76,15 @@ namespace Parsing::Tokens
         }
         catch (const std::exception &e)
         {
-            std::cerr << e.what() << '\n';
+            logger.error(e.what());
             return false;
         }
 
         m_lineCounter.count(input);
 
-        std::cout << std::endl
-                  << Font::fgreen << " ==== INPUT ==== \n"
-                  << Font::reset
-                  << Font::forange << "'" << input << "'" << Font::reset << "\n"
-                  << std::endl;
-
-
+        logger.printlnColor(Utils::Font::fgreen, " ==== INPUT ==== ");
+        logger.printlnColor(Utils::Font::forange, "'{}'\n", input);
+        
         std::string intermediate = input;
         unsigned int pos = 0;
 
@@ -107,6 +93,8 @@ namespace Parsing::Tokens
             if (pos >= input.size())
                 break;
 
+            // logger.debug(" ===POS [{}] === ", pos);
+
             outStr << " === POS[" << pos << "] === \n";
             intermediate = input.substr(pos);
 
@@ -114,12 +102,14 @@ namespace Parsing::Tokens
             for (auto &token : m_definedTokens)
             {
                 std::string printableIntermediate = Utils::sanitizeString(intermediate);
+                logger.debug("Testing token: '{}' on '{}'", token.tokenName, printableIntermediate);
                 outStr << " - Testing token: "
                           << Font::fyellow << "'" << token.tokenName << "'" << Font::reset
                           << " on: " << Font::fcyan << "'" << printableIntermediate << "' " << Font::reset;
 
                 if (token.regex.match(intermediate))
                 {
+                    // logger.debug("OK");
                     outStr << Font::fgreen << "ok" << Font::reset << '\n';
 
                     unsigned int _maxMatch = token.regex.getMaxMatch();
@@ -130,14 +120,20 @@ namespace Parsing::Tokens
 
                     unsigned int _line = m_lineCounter.accumulate(pos);
 
+                    // Utils::Stream s;
+                    // s << "Matched token[";
                     if (_numLinesBetween == 0)
                     {
+                        // s << _line + 1;
                         outStr << Font::fgreen << "Matched token[" << _line + 1 << "][";
                     }
                     else
                     {
+                        // s << _line + 1 << "-" << _line + _numLinesBetween << "][";
                         outStr << Font::fgreen << "Matched token[" << _line + 1 << "-" << _line + _numLinesBetween << "][";
                     }
+                    // s << _start << ", " << _end << "]: '"  << token.tokenName << "': '" <<
+                        // Utils::sanitizeString(token.regex.getMatch()) << "'\n";
 
                     outStr << _start << ", " << _end << "]: "
                               << Font::fyellow << "'" << token.tokenName << "'" << Font::reset << ": "
@@ -168,10 +164,7 @@ namespace Parsing::Tokens
 
         outStr << Font::bold << Font::fgreen << "SUCCESS" << Font::reset << '\n';
 
-        if(debug)
-        {
-            std::cout <<outStr.end();
-        }
+        logger.debug(outStr.end());
         return true;
     }
 
@@ -198,12 +191,12 @@ namespace Parsing::Tokens
     const std::string Parser::toString() const
     {
         Utils::Stream stream;
-        stream.add(Font::fgreen, " ==== TOKENIZER ==== \n", Font::reset);
-        stream.add(Font::fgreen, " 1. Input tokens \n", Font::reset);
+        stream.add(logger.scopeStr(), Font::fgreen, " ==== TOKENS ==== \n", Font::reset);
+        stream.add(logger.scopeStr(), Font::fgreen, " 1. Input tokens \n", Font::reset);
 
         for (auto &token : m_definedTokens)
         {
-            stream.add(
+            stream.add(logger.scopeStr(),
                 Font::fyellow, "'", token.tokenName, "'", Font::reset, ": ", 
                 Font::fcyan, token.regex.getPattern(), Font::reset
             );
@@ -216,8 +209,9 @@ namespace Parsing::Tokens
             stream << '\n';
         }
         
-        stream << '\n';
-        stream.add(Font::fgreen, "2. Parsed tokens ---- \n", Font::reset);
+        // stream << '\n';
+        stream.add(logger.scopeStr(),Font::fgreen, "2. Parsed tokens\n", Font::reset);
+        stream.add(logger.scopeStr());
 
         unsigned int oldLine = 0;
         for (const auto &token : m_tokens)
@@ -229,7 +223,7 @@ namespace Parsing::Tokens
             }
             for (unsigned int i = 0; i < linesBetween; i++)
             {
-                stream << '\n';
+                stream << '\n' << logger.scopeStr();
             }
         }
 
@@ -239,6 +233,8 @@ namespace Parsing::Tokens
 
     void Parser::print() const
     {
-        std::cout << toString() << std::endl;
+        logger.toggleScope();
+        logger.println("{}\n", toString());
+        logger.toggleScope();
     }
 };

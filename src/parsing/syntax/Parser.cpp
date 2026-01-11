@@ -3,14 +3,17 @@
 #include "utils/font.h"
 #include "utils/lineCounter.h"
 
-#include <print>
-
 using Utils::Font;
 
 
 namespace Parsing::Syntax
 {
+    Parser::Parser() 
+        : logger("SYNTAX")
+    {}
+
     Parser::Parser(const std::string& syntax_path)
+        : logger("SYNTAX")
     {
         parseSyntaxFile(syntax_path);
     };
@@ -25,8 +28,7 @@ namespace Parsing::Syntax
         }
         catch (const std::exception &e)
         {
-            std::println("{}Exception triggered in syntax parser: '{}'{}", Font::fred, e.what(), Font::reset);
-            // std::cerr << e.what() << '\n';
+            logger.error("Exception triggered in syntax parser: '{}'", e.what());
             return false;
         }
 
@@ -42,11 +44,8 @@ namespace Parsing::Syntax
             // print teststr and size
             if (testStr[size - 1] != ';' && testStr[size - 2] != ';')
             {
-                // std::println
-                std::println("{}Error: Syntax file does not end with a semicolon{}", Font::fred, Font::reset);
-                std::println("{}Syntax: '{}'{}", Font::fred, testStr, Font::reset);
-                // std::cout << Utils::Font::fred << "Error: Syntax file does not end with a semicolon" << Utils::Font::reset << std::endl;
-                // std::cout << Utils::Font::fred << "Syntax: '" << testStr << "'" << Utils::Font::reset << std::endl;
+                logger.error("Error: Syntax file does not end with a semicolon");
+                logger.error("Syntax: '{}'", testStr);
                 return false;
             }
         }
@@ -81,7 +80,7 @@ namespace Parsing::Syntax
         Utils::StringVec nameAndRule = Utils::split(rulePartSanitized, "->");
         if (nameAndRule.size() != 2)
         {
-            std::println("{}Error[{}]: Rule is not in the correct format: '{}'{}", Font::fred, position, rule, Font::reset);
+            logger.error("Error[{}]: Rule is not in the correct format: '{}'", position, rule);
             return false;
         }
 
@@ -99,7 +98,7 @@ namespace Parsing::Syntax
         }
         else
         {
-            std::println("{}Rule: '{}' already exists!{}", Font::fred, ruleObj.name(), Font::reset);
+            logger.error("Rule: '{}' already exists!", ruleObj.name());
             return false;
         }
 
@@ -108,13 +107,10 @@ namespace Parsing::Syntax
 
     bool Parser::validateInput(Tokens::Parser& parser)
     {
-        // for(auto& t : parser.)
         for(auto& r : m_rules)
         {
-            // current = origi
             for(auto& p : r.patterns())
             {
-                // Ast* temp = new Ast(); 
                 for(auto& t : p.tokens())
                 {
                     if(parser.isTokenDefined(t.token))
@@ -151,31 +147,20 @@ namespace Parsing::Syntax
                 if(p.tokens().size() == 1)
                 {
                     auto& t = p.tokens()[0];
-                    // if(m_definedTokensTree.contains(t.token))
-                    // {
-                        // m_tree[r.name()]->nodes.push_back(m_definedTokensTree[t.token]);
-                    // }
                     if(m_tree.contains(t.token))
                     {
                         m_tree[r.name()]->nodes.push_back(m_tree[t.token]);
                         m_tree[t.token]->references.push_back(m_tree[r.name()]);
-                        // temp->nodes.push_back(m_tree[t.token]);
                     }
                     continue;
                 }
 
                 Ast* temp = new Ast("temp");
-                // Ast* temp = new Ast(); 
                 for(auto& t : p.tokens())
                 {
-                    // if(m_definedTokensTree.contains(t.token))
-                    // {
-                        // temp->nodes.push_back(m_definedTokensTree[t.token]);
-                    // }
                     if(m_tree.contains(t.token))
                     {
                         temp->nodes.push_back(m_tree[t.token]);
-                        // m_tree[r.name()]->references.push_back(temp);
                     }
                 }
                 temp->references.push_back(m_tree[r.name()]);
@@ -184,32 +169,22 @@ namespace Parsing::Syntax
         }
 
         m_mainTree = m_tree[m_rules[0].name()];
-
-        // std::println("{}", m_tree["artihExpr"]->nodes[0]->nodes[0]->nodes.size());
     }
 
     void Parser::printAsts() const
     {
-        std::println("{}", m_mainTree->toString());
-        // return;
-        // for(auto[key, value] : m_tree)
-        // {
-        //     std::println("{}", value->toString());
-        //     // for()
-        // }
+        logger.println("{}", m_mainTree->toString());
     }
 
     void Parser::printRules() const
     {
-        // print size
-        std::println("\n{} ==== PARSED SYNTAX ==== {}", Font::fgreen, Font::reset);
-        // std::cout << "\n"
-        //           << Font::fgreen << " ==== PARSED SYNTAX ==== \n"
-        //           << Font::reset;
+        logger.printlnColor(Utils::Font::fgreen, " ==== PARSED SYNTAX ==== ");
+        logger.toggleScope();
         for (auto &rule : m_rules)
         {
             rule.print();
         }
-        
+        logger.println("");
+        logger.toggleScope();
     }
 }

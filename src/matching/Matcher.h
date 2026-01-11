@@ -6,6 +6,7 @@
 #include <list>
 #include <memory>
 #include "Ast.h"
+#include "utils/logger.h"
 
 namespace Matching
 {
@@ -16,6 +17,8 @@ namespace Matching
         std::string m_currentRule;
         Parsing::Tokens::Parser m_tokenParser;
         Parsing::Syntax::Parser m_syntaxParser;
+
+        mutable Utils::Logger logger;
 
         std::vector<std::shared_ptr<Ast>> m_tokens;
 

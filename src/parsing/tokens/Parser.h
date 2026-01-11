@@ -7,6 +7,7 @@
 #include "Token.h"
 #include "regex/regex.h"
 #include "utils/lineCounter.h"
+#include "utils/logger.h"
 
 #include "traits/Stringify.h"
 
@@ -31,8 +32,9 @@ namespace Parsing::Tokens
         std::vector<Token> m_tokens;
         std::vector<Token> m_tokensFull;
 
+        mutable Utils::Logger logger;
     public:
-        Parser() {}
+        Parser();
         Parser(const std::string &file_path);
         // FileParser(const FileParser &other);
         // Parser(Parser &&other) noexcept;

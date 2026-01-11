@@ -5,12 +5,14 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
+#include "utils/logger.h"
 
 namespace Matching
 {
 
     struct Ast : public Traits::Stringify
     {
+        mutable Utils::Logger logger;
         std::string name;
         std::shared_ptr<Ast> parent;
         std::vector<std::shared_ptr<Ast>> nodes;
@@ -18,36 +20,28 @@ namespace Matching
         uint32_t numTokens = 0;
         bool custom_token = false;
 
-        Ast(){}
-
-        Ast(std::string name)
-            : name(name)
+        Ast()
+            : logger("MATCHER")
         {}
 
-
-
-        // ~Ast()
-        // {
-        //     for(Ast* node : nodes)
-        //     {
-        //         delete node;
-        //     }
-        // }
+        Ast(std::string name)
+            : name(name), logger("MATCHER")
+        {}
 
         virtual const std::string paddedToString(uint8_t padding) const
         {
             Utils::Stream stream;
-            std::string pad;
+            std::string pad = Utils::Stream::pad(padding, "  ");
+    
+            if(parent)
             {
-                Utils::Stream paddingS;
-                for(uint8_t i = 0; i < padding; i++)
-                {
-                    paddingS << "  ";
-                }
-
-                pad = paddingS.end();
+                stream << logger.scopeStr() << pad << name << "(" << parent->name << "): \n";
             }
-            stream << pad << name << ": \n";
+            else
+            {
+                stream << logger.scopeStr() << pad << name << ": \n";
+            }
+
             std::string newline = (nodes.size() > 1) ? "\n" : "";
             for(uint32_t i = 0; i < nodes.size(); i++)
             {
@@ -81,17 +75,18 @@ namespace Matching
         virtual const std::string paddedToString(uint8_t padding) const override
         {
             Utils::Stream stream;
-            std::string pad;
-            {
-                Utils::Stream paddingS;
-                for(uint8_t i = 0; i < padding; i++)
-                {
-                    paddingS << "  ";
-                }
+            std::string pad = Utils::Stream::pad(padding, "  ");
 
-                pad = paddingS.end();
+            if(parent)
+            {
+                stream << logger.scopeStr() << pad << name << "(" << parent->name << "): ";
             }
-            stream << pad << name << ": '" << token.value << "'";
+            else
+            {
+                stream << logger.scopeStr() << pad << name << ": ";
+            }
+            
+            stream << Utils::Font::fmagenta << "'" << token.value << "'" << Utils::Font::reset;
             return stream.end();
         }
     };

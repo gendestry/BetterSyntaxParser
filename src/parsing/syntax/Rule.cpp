@@ -1,18 +1,13 @@
 #include "Rule.h"
-
 #include "utils/utils.h"
-#include "utils/font.h"
 #include "utils/stringutils.h"
-#include <print>
-#include <format>
-#include <sstream>
-
 
 using Utils::Font;
 
 namespace Parsing::Syntax
 {
     Rule::Rule(const std::string& name, const std::string& right)
+        : logger("SYNTAX")
     {
         if(!parseLeft(name))
         {}
@@ -24,7 +19,7 @@ namespace Parsing::Syntax
     {
         if (str.size() == 0)
         {
-            std::println("{}Invalid rule: empty string!{}", Font::fred, Font::reset);
+            logger.error("Invalid rule: empty string!");
             return false;
         }
 
@@ -47,7 +42,7 @@ namespace Parsing::Syntax
     {
         if (str.size() == 0)
         {
-            std::println("{}Invalid rule: empty string!{}", Font::fred, Font::reset);
+            logger.error("Invalid rule: empty string!");
             return false;
         }
 
@@ -70,31 +65,29 @@ namespace Parsing::Syntax
 
     const std::string Rule::toString() const
     {
-        std::stringstream ss;
-        ss << Font::fyellow << m_name;
+        Utils::Stream ss;
+        ss << logger.scopeStr() << Font::fyellow << m_name;
 
         if (m_return.size() > 0)
         {
             ss << " -> " << m_return;
         }
 
-        ss << std::format(" (\n{}", Font::reset);
+        ss.addFormatted(" (\n{}", Font::reset);
         for (auto &pattern : m_patterns)
         {
-            ss << Utils::String::concat("  ", Font::fcyan, pattern.toString(), Font::reset, "\n");
+            ss << logger.scopeStr() << Utils::String::concat("  ", Font::fcyan, pattern.toString(), Font::reset, "\n");
         }
 
-        ss << std::format("{}){}", Font::fyellow, Font::reset);
-        // for(auto* ast : asts)
-        // {
-        //     std::println("{}", ast->toString());
-        // }
-        return ss.str();
+        ss.addFormatted("{}{}){}", logger.scopeStr(), Font::fyellow, Font::reset);
+        return ss.end();
     }
 
 
     void Rule::print() const
     {
-        std::println("{}", toString());
+        logger.toggleScope();
+        logger.println("{}", toString());
+        logger.toggleScope();
     }
 }

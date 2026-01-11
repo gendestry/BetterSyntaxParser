@@ -34,26 +34,9 @@ namespace Parsing::Syntax
     const std::string Ast::paddedString(uint16_t currentPadding) const
     {
         Utils::Stream stream;
-        
-        auto getPadding = [](uint16_t p) -> std::string
-        {
-            if(p == 0)
-            {
-                return "";
-            }
-
-            Utils::Stream padding;
-            for(uint8_t i = 0; i < p; i++)
-            {
-                padding << " ";
-            }
-
-            // padding << "-";
-            return padding.end();
-        };
+        std::string pad = Utils::Stream::pad(currentPadding, " ");
 
         std::string myref;
-
         {
             Utils::Stream ref;
             ref << "references: ";
@@ -68,7 +51,7 @@ namespace Parsing::Syntax
         if(terminates())
         {
             stream << Utils::Font::byColorCode(160,160,160) << Utils::Font::italic
-                << getPadding(currentPadding) << "'" <<  name  << "'" 
+                << pad << "'" <<  name  << "'" 
                 << Utils::Font::reset << ", " << myref << "\n";
             
             return stream.end();
@@ -76,7 +59,7 @@ namespace Parsing::Syntax
         else
         {
             stream << Utils::Font::fmagenta
-                << getPadding(currentPadding) << "'" <<  name  << "'" 
+                << pad << "'" <<  name  << "'" 
                 << Utils::Font::reset << ", " << myref;
         }
 
@@ -94,7 +77,7 @@ namespace Parsing::Syntax
             }
             else
             {
-                stream << getPadding(currentPadding + 2) << "'" << node->name << "'" << "\n";
+                stream << Utils::Stream::pad(currentPadding + 2, " ") << "'" << node->name << "'" << "\n";
             }
         }
 
@@ -163,6 +146,9 @@ namespace Parsing::Syntax
             }
             currentIndex = prevIndex;
         }
+
+        // TODO: temp
+        return true;
         // for(auto)
     }
 

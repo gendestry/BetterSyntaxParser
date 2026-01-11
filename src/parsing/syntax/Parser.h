@@ -1,9 +1,10 @@
 #pragma once
-#include "Rule.h"
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
+#include "Rule.h"
 #include "Ast.h"
+#include "utils/logger.h"
 
 #include "parsing/tokens/Parser.h"
 
@@ -16,10 +17,12 @@ namespace Parsing::Syntax
         std::unordered_map<std::string, Ast*> m_tree;
         Ast* m_mainTree;
 
+        mutable Utils::Logger logger;
+
         bool parseSyntaxRule(const std::string &rule, uint32_t position); 
         void buildTree();       
     public:
-        Parser() {}
+        Parser();
         Parser(const std::string& syntax_path);
         
         bool parseSyntaxFile(const std::string& inputFilePath);

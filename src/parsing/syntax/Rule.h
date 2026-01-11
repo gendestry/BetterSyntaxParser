@@ -4,6 +4,7 @@
 #include "traits/Stringify.h"
 #include "Pattern.h"
 #include "Ast.h"
+#include "utils/logger.h"
 
 namespace Parsing::Syntax
 {
@@ -13,6 +14,7 @@ namespace Parsing::Syntax
         std::string m_name;
         std::string m_return;
         std::vector<Pattern> m_patterns;
+        mutable Utils::Logger logger;
 
         bool parseLeft(const std::string& str);
         bool parseRight(const std::string& str);
