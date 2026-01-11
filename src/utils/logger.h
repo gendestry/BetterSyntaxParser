@@ -21,32 +21,22 @@ namespace Utils
     private:
         static uint32_t scopeSize;
         static Level s_level;
+        
+        uint32_t m_padOffset = 0;
         Level m_level = NOTSET;
         std::string m_scope;
+        
         mutable std::string usedScope;
         
         std::string getScopePadding() const;
+        std::string scopePadding() const
+        {
+            return usedScope + Utils::Stream::pad(m_padOffset, "  ");
+        }
 
     public:
-        explicit Logger(std::string scope)
-            : m_scope(std::move(scope)) 
-        {
-            if(scope.size() > scopeSize)
-            {
-                scopeSize = scope.size();
-            }
-            toggleScope();
-        }
-
-        explicit Logger(Logger& other, std::string scope)
-        {
-            m_scope = other.m_scope + scope;
-            if(scope.size() > scopeSize)
-            {
-                scopeSize = scope.size();
-            }
-            toggleScope();
-        }
+        explicit Logger(std::string scope);
+        explicit Logger(Logger& other, std::string scope);
 
         static void setLevel(Level level)
         {
@@ -58,35 +48,31 @@ namespace Utils
             m_level = level;
         }
 
-        void toggleScope()
+        void incPadOffset()
         {
-            if(usedScope.empty())
-            {
-                usedScope = Utils::String::concat("[", m_scope, getScopePadding(), "] ");
-            }
-            else
-            {
-                usedScope.clear();
-            }
+            m_padOffset++;
         }
 
-        std::string scopeStr() const
+        void decPadOffset()
         {
-            return "[" + m_scope + getScopePadding() + "] ";
+            m_padOffset--;
         }
+
+        void toggleScope();
+        std::string scopeStr() const;
 
         template<typename... Args>
         void print(const std::string& format, Args&&... args)
         {
             auto msg = std::vformat(format, std::make_format_args(args...));
-            std::print("{}{}", usedScope, msg);
+            std::print("{}{}", scopePadding(), msg);
         }
 
         template<typename... Args>
         void println(const std::string& format, Args&&... args)
         {
             auto msg = std::vformat(format, std::make_format_args(args...));
-            std::println("{}{}", usedScope, msg);
+            std::println("{}{}", scopePadding(), msg);
         }
 
         template<typename... Args>
@@ -95,7 +81,7 @@ namespace Utils
                         Args&&... args)
         {
             auto msg = std::vformat(format, std::make_format_args(args...));
-            std::print("{}{}{}{}", usedScope, color, msg, Font::reset);
+            std::print("{}{}{}{}", scopePadding(), color, msg, Font::reset);
         }
 
         template<typename... Args>
@@ -104,7 +90,7 @@ namespace Utils
                           Args&&... args)
         {
             auto msg = std::vformat(format, std::make_format_args(args...));
-            std::println("{}{}{}{}", usedScope, color, msg, Font::reset);
+            std::println("{}{}{}{}", scopePadding(), color, msg, Font::reset);
         }
 
         template<typename... Args>
@@ -115,7 +101,7 @@ namespace Utils
             if(level <= Level::DEBUGGING)
             {
                 auto msg = std::vformat(format, std::make_format_args(args...));
-                std::println("{}{}{}{}{}", Utils::Font::italic, Utils::Font::byColorCode(140,140,140), usedScope, msg, Font::reset);
+                std::println("{}{}{}{}{}", Utils::Font::italic, Utils::Font::byColorCode(140,140,140), scopePadding(), msg, Font::reset);
             }
         }
 
@@ -124,7 +110,7 @@ namespace Utils
                     Args&&... args)
         {
             auto msg = std::vformat(format, std::make_format_args(args...));
-            std::println("{}{}{}{}", Utils::Font::fred, usedScope, msg, Font::reset);
+            std::println("{}{}{}{}", Utils::Font::fred, scopePadding(), msg, Font::reset);
         }
     };
 }

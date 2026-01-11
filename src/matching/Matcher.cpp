@@ -218,7 +218,6 @@ namespace Matching
             logger.println("");
             logger.toggleScope();
 
-
             step = matchStep();
             
             m_tokens.erase(m_tokens.begin(), m_tokens.begin() + m_currentToken);
@@ -254,6 +253,7 @@ namespace Matching
 
     std::vector<std::shared_ptr<Ast>> Matcher::matchPattern(const Parsing::Syntax::Pattern& pattern)
     {
+        logger.incPadOffset();
         logger.debug("Matching pattern: {} at index: {}", pattern.toString(), m_currentToken);
 
         auto& tokens = pattern.tokens();
@@ -281,6 +281,7 @@ namespace Matching
                     {
                         logger.error("Pattern not matched: {}", pattern.toString());
                         ast.clear();
+                        logger.decPadOffset();
                         return ast;
                     }
                     ast.push_back(temp);
@@ -296,9 +297,11 @@ namespace Matching
         if(index == tokens.size())
         {
             logger.printlnColor(Utils::Font::fgreen, "Pattern matched: {}", pattern.toString());
+            logger.decPadOffset();
             return ast;
         }
 
+        logger.decPadOffset();
         ast.clear();
         return ast;
     };
@@ -376,6 +379,7 @@ namespace Matching
         {
             a->parent = max;
         }
+
         return max;
     }
 
